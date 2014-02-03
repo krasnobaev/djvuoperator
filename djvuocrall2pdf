@@ -1,0 +1,26 @@
+#!/bin/bash
+#http://askubuntu.com/questions/46233/converting-djvu-to-pdf
+echo "Bash version ${BASH_VERSION}..."
+
+for f in *.djvu;
+do
+	# prepare, to hold your colour
+	mkdir ./tmp
+	cp "$f" ./tmp/
+	cd tmp
+
+	num=$(djvm -l "$f" | grep PAGE | wc -l) # number of pages being processed
+	for i in $(seq -w $num)
+	do
+		djvu2hocr -p $i "$f" | sed 's/ocrx/ocr/g' > t$i.html # extract ocr
+		ddjvu -format=tiff -page=$i "$f" t$i.tif	# extract image
+	done
+
+	pdfbeads -o out.pdf
+
+	# clean
+	mv out.pdf "../$f.pdf"
+	cd ..
+	rm -r ./tmp
+done
+

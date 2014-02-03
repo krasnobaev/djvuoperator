@@ -1,0 +1,8 @@
+#!/bin/bash
+
+echo usage addocr2djvu lang file.djvu
+echo lang = eng, rus, rus-eng
+
+djvused "$2" -e 'remove-txt' -s
+for p in $(seq 1 $(djvused -e n "$2"  )); do ocrodjvu -p $p --in-place --render=all --engine=cuneiform --language=$1 "$2"  ; done
+

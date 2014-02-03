@@ -1,0 +1,19 @@
+#!/bin/bash
+# 
+let "i=0"
+max=10000
+for f in $(find -name '0*.tif' | sort); do
+	let "i++"
+	echo $i ":" $f
+	convert $f `printf "%0*d\n" ${#max} $i`.pbm
+	cjb2 -clean `printf "%0*d\n" ${#max} $i`.pbm `printf "%0*d\n" ${#max} $i`.djvu
+done
+
+let "i=0"
+mv `printf "%0*d\n" ${#max} 1`.djvu out.djvu
+for f in $(find -name '0*.djvu' | sort); do
+	let "i++"
+	echo "page" $i
+	djvm -i out.djvu $f
+done
+

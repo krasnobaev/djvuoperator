@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+
+# for p in $(seq 1 $(djvused -e n 3.djvu)); do     ocrodjvu -p $p --in-place --render=all --engine=cuneiform --language=rus-eng 3.djvu; done
+# djvused '3.djvu' -e remove-txt -s
+
+# $lang = "eng";
+$lang = "rus";
+ 
+if ( $#ARGV < 0 ) {
+  print "give a DJVU file as 1st argument \n" ;
+  exit 0 ;
+}
+ 
+$inputdjvu = $ARGV[0] ;
+$imagetmp = "/tmp/temp.tif" ;
+$djvutmp = "/tmp/outdjvu" ;
+ 
+print "processing of $inputdjvu\n" ;
+ 
+# calculate the number of pages
+$nbpages = `djvused "$inputdjvu" -e 'n'` ;
+print "number of pages: $nbpages" ;
+ 
+for ($i=1 ; $i <= $nbpages ; $i++) {
+  print "OCR de la page $i\n" ;
+ 
+  # page extraction as an image
+  `ddjvu -format=tiff -mode=black -page="$i" "$inputdjvu" $imagetmp` ;
+
+  # ocrodjvu -e=cuneiform --language=rus-eng 1.djvu -o tt1.djvu
+  `tesseract $imagetmp /tmp/outocr -l $lang` ;
+  print "OCR done\n" ;
+ 
+  # ??? 
+  open(TXT, '/tmp/outocr.txt') ;
+  open(TXTDJVU, ">$djvutmp") ;
+ 
+  print TXTDJVU "(page 0 0 1 1\n" ;
+  while ($line=<TXT>) {
+    $line =~ s/\"/\\\"/g ;
+    print TXTDJVU "(line 0 0 1 1 \"$line\")\n" ;
+  }
+  print TXTDJVU ")\n" ;
+ 
+  close (TXT) ;
+  close (TXTDJVU) ;
+ 
+  # writing the text in the DJVU file
+  `djvused "$inputdjvu" -e 'select $i; remove-txt' -s` ;
+  `djvused "$inputdjvu" -e 'select $i; set-txt $djvutmp' -s` ;
+}
+ 
+# note: structure which works
+# print TXTDJVU "(page 0 0 1 1\n" ;
+#   print TXTDJVU "     (line 0 0 1 1 \"toto\")\n" ;
+#   print TXTDJVU "     (line 0 0 1 1 \"toto la la\")\n";
+#   print TXTDJVU ")\n" ;
