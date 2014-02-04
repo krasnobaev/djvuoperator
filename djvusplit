@@ -1,5 +1,5 @@
 #!/bin/bash
-#http://askubuntu.com/questions/46233/converting-djvu-to-pdf
+#http://unix.stackexchange.com/questions/26195/how-to-split-each-page-of-a-djvu-file
 echo Usage: djvusplit PAGEFROM PAGETO FILE.DJVU
 echo Example: djvusplit 3 10 file.djvu
 
