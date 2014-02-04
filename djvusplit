@@ -1,9 +1,11 @@
 #!/bin/bash
 #http://unix.stackexchange.com/questions/26195/how-to-split-each-page-of-a-djvu-file
+# 
 # dependencies <lib> : <tool>
 # djvulibre-bin : ddjvu, cjb2, djvm
 # imagemagick : convert
 # awk : awk
+# coreutils : mktemp
 echo Usage: djvusplit PAGEFROM PAGETO FILE.DJVU
 echo Example: djvusplit 3 10 file.djvu
 
@@ -11,33 +13,32 @@ echo Example: djvusplit 3 10 file.djvu
 # pto = $2
 # file $3
 
-mkdir ./tmp
-cp "$3" ./tmp/
-cd tmp
+TFLDR=$(mktemp -d -t djvusplit.XXXXX)
+echo "Temporary folder: "$TFLDR
+cp "$3" $TFLDR/
 
 for i in $(seq -w $2 -1 $1)
 do
 	# extract bifold page
-	ddjvu -format=tiff -page=$i "$3" t$i.tiff
+	ddjvu -format=tiff -page=$i $TFLDR/"$3" $TFLDR/t$i.tiff
 
 	# split it in two tiff's & convert to one djvu
-	convert -crop 2x1@ t$i.tiff t$i-%d.tiff
-	convert t$i-0.tiff t$i-0.pbm
-	convert t$i-1.tiff t$i-1.pbm
-	cjb2 t$i-0.pbm t$i-0.djvu
-	cjb2 t$i-1.pbm t$i-1.djvu
-	djvm -i t$i-0.djvu t$i-1.djvu 2
+	convert -crop 2x1@ $TFLDR/t$i.tiff $TFLDR/t$i-%d.tiff
+	convert $TFLDR/t$i-0.tiff $TFLDR/t$i-0.pbm
+	convert $TFLDR/t$i-1.tiff $TFLDR/t$i-1.pbm
+	cjb2 $TFLDR/t$i-0.pbm $TFLDR/t$i-0.djvu
+	cjb2 $TFLDR/t$i-1.pbm $TFLDR/t$i-1.djvu
+	djvm -i $TFLDR/t$i-0.djvu $TFLDR/t$i-1.djvu 2
+
+	# replace bifold page with two pages
+	djvm -d $TFLDR/$3 $i
+	djvm -i $TFLDR/$3 $TFLDR/t$i-0.djvu $i
 
 	# clean unnecessary (tiff, pbm, djvu) files
-	djvm -d $3 $i
-	djvm -i $3 t$i-0.djvu $i
-
-	# clean iteration
-	rm ./t*
+	rm $TFLDR/t*
 done
 
 # total clean
-mv $3 "../$(echo $3 | awk -F "." '{print $1}')_splitted.djvu"
-cd ..
-rm -r ./tmp
+mv $TFLDR/$3 "./$(echo $3 | awk -F "." '{print $1}')_splitted.djvu"
+rm -r $TFLDR
 
