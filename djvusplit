@@ -13,13 +13,18 @@ cd tmp
 
 for i in $(seq -w $2 -1 $1)
 do
+	# extract bifold page
 	ddjvu -format=tiff -page=$i "$3" t$i.tiff
+
+	# split it in two tiff's & convert to one djvu
 	convert -crop 2x1@ t$i.tiff t$i-%d.tiff
 	convert t$i-0.tiff t$i-0.pbm
 	convert t$i-1.tiff t$i-1.pbm
 	cjb2 t$i-0.pbm t$i-0.djvu
 	cjb2 t$i-1.pbm t$i-1.djvu
 	djvm -i t$i-0.djvu t$i-1.djvu 2
+
+	# clean unnecessary (tiff, pbm, djvu) files
 	djvm -d $3 $i
 	djvm -i $3 t$i-0.djvu $i
 
@@ -28,7 +33,7 @@ do
 done
 
 # total clean
-mv $3 "../$(echo $3 | awk -F "." '{print $1}').djvu"
+mv $3 "../$(echo $3 | awk -F "." '{print $1}')_splitted.djvu"
 cd ..
 rm -r ./tmp
 
