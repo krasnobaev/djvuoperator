@@ -4,16 +4,17 @@ echo "Bash version ${BASH_VERSION}..."
 
 for f in *.djvu;
 do
+
 	# prepare, to hold your colour
 	mkdir ./tmp
-	cp "$f" ./tmp/
+	cp "$f" ./tmp/in.djvu
 	cd tmp
 
-	num=$(djvm -l "$f" | grep PAGE | wc -l) # number of pages being processed
+	num=$(djvm -l in.djvu | grep PAGE | wc -l) # number of pages being processed
 	for i in $(seq -w $num)
 	do
-		djvu2hocr -p $i "$f" | sed 's/ocrx/ocr/g' > t$i.html # extract ocr
-		ddjvu -format=tiff -page=$i "$f" t$i.tif	# extract image
+		djvu2hocr -p $i in.djvu | sed 's/ocrx/ocr/g' > t$i.html # extract ocr
+		ddjvu -format=tiff -page=$i in.djvu t$i.tif	# extract image
 	done
 
 	pdfbeads -o out.pdf
@@ -23,4 +24,3 @@ do
 	cd ..
 	rm -r ./tmp
 done
-

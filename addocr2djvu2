@@ -7,10 +7,12 @@ echo lang = eng, rus, rus-eng
 
 for f in "$2"
 do
-	djvused "$f" -e 'remove-txt' -s
-	for p in $(seq 1 $(djvused -e n "$f"  ))
+  cp "$f" tmp.djvu
+	djvused tmp.djvu -e 'remove-txt' -s
+	for p in $(seq 1 $(djvused -e n tmp.djvu))
 	do
-		ocrodjvu -p $p --in-place --render=all --engine=cuneiform --language=$1 "$f"
+		ocrodjvu -p $p --in-place --render=all --engine=tesseract --language=$1 tmp.djvu
+		# ocrodjvu -p $p --in-place --render=all --engine=cuneiform --language=$1 tmp.djvu
 	done
+  mv tmp.djvu "$f"
 done
-
